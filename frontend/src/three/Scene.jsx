@@ -14,14 +14,16 @@ const Robot = ({ command }) => {
     const step = 2;
     const angleStep = Math.PI / 2;
 
+    // We can mutate targetPosition properties because it is an object (Vector3)
     if (command.action === 'forward') targetPosition.z -= step;
     if (command.action === 'backward') targetPosition.z += step;
-    if (command.action === 'left') targetRotation += angleStep;
-    if (command.action === 'right') targetRotation -= angleStep;
+    
+    // We MUST use the setter for targetRotation because it is a primitive number
+    if (command.action === 'left') setTargetRotation(prev => prev + angleStep);
+    if (command.action === 'right') setTargetRotation(prev => prev - angleStep);
     
     setTargetPosition(targetPosition.clone());
-    setTargetRotation(targetRotation);
-  }, [command]);
+  }, [command, targetPosition]);
 
   useFrame((state, delta) => {
     // Smooth interpolation for movement (Kinematics)
