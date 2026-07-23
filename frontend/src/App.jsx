@@ -49,11 +49,10 @@ export default function App() {
     const res = await fetch('http://localhost:8000/api/command', { method: 'POST', body: formData });
     const data = await res.json();
     
-    if (data.intent.type === 'locomotion') {
-      setLastCommand(data.intent);
+   if (data.intent.type === 'locomotion') {
+      // We add a timestamp so React knows it's a new command every single time
+      setLastCommand({ ...data.intent, timestamp: Date.now() });
       setResponseMsg(`Speaker: ${data.speaker} | Action: ${data.intent.action}`);
-    } else {
-      setResponseMsg(`Speaker: ${data.speaker} | Reply: ${data.intent.response}`);
     }
     
     setStatus('Idle');
@@ -77,9 +76,18 @@ export default function App() {
 
       <div style={{ marginBottom: '20px', padding: '10px', background: '#eee' }}>
         <h3>2. Send Command</h3>
-        <button onClick={handleCommand} style={{ background: 'blue', color: 'white' }}>
+        <button onClick={handleCommand} style={{ background: 'blue', color: 'white', padding: '10px', marginRight: '10px', cursor: 'pointer' }}>
           Speak Command
         </button>
+        
+        {/* --- NEW DEBUG BUTTON --- */}
+        <button 
+          onClick={() => setLastCommand({ type: 'locomotion', action: 'forward' })} 
+          style={{ background: 'green', color: 'white', padding: '10px', cursor: 'pointer' }}
+        >
+          Force Move Forward (Test)
+        </button>
+
         <p><strong>Robot Response:</strong> {responseMsg}</p>
       </div>
 
