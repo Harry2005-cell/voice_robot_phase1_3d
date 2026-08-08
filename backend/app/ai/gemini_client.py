@@ -1,14 +1,69 @@
 import google.generativeai as genai
 import json
+import re
 import os
 
-api_key = os.environ.get("GEMINI_API_KEY")
+api_key = os.getenv("GEMINI_API_KEY", "")
 if api_key:
     genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+CANDIDATE_MODELS = ["gemma-4-26b-a4b-it", "gemini-2.0-flash", "gemini-1.5-flash"]
+
+def parse_rule_based_intent(text: str):
+    """Fast & reliable local keyword matching for locomotion commands."""
+    text_lower = text.lower().strip()
+    
+    if any(w in text_lower for w in ["forward", "front", "ahead", "straight"]):
+        return {"type": "locomotion", "action": "forward"}
+    if any(w in text_lower for w in ["backward", "back", "reverse"]):
+        return {"type": "locomotion", "action": "backward"}
+    if "left" in text_lower:
+        return {"type": "locomotion", "action": "left"}
+    if "right" in text_lower:
+        return {"type": "locomotion", "action": "right"}
+        
+    return None
+
+def clean_extract_json(text_str: str):
+    """Extract valid JSON dict even if model returns markdown or extra reasoning text."""
+    if not text_str:
+        return None
+    # 1. Direct JSON parse
+    try:
+        data = json.loads(text_str.strip())
+        if isinstance(data, dict): return data
+    except Exception:
+        pass
+
+    # 2. Extract content from ```json ... ``` blocks
+    match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text_str, re.DOTALL)
+    if match:
+        try:
+            data = json.loads(match.group(1).strip())
+            if isinstance(data, dict): return data
+        except Exception:
+            pass
+
+    # 3. Extract between outer braces '{' and '}'
+    start = text_str.find('{')
+    end = text_str.rfind('}')
+    if start != -1 and end != -1 and end > start:
+        try:
+            data = json.loads(text_str[start:end+1].strip())
+            if isinstance(data, dict): return data
+        except Exception:
+            pass
+
+    return None
 
 def get_intent(transcribed_text: str, speaker_name: str):
+    # 1. Rule-based fast path for locomotion commands
+    rule_intent = parse_rule_based_intent(transcribed_text)
+    if rule_intent:
+        print(f"[INTENT PARSER] Rule matched: {rule_intent} from '{transcribed_text}'")
+        return rule_intent
+
+    # 2. AI Gemini / Gemma models for conversation or general questions (e.g. "who is president?", "tell me about gravity")
     prompt = f"""
     You are the brain of a 3D virtual robot. 
     The current speaker identified by biometrics is: {speaker_name}.
@@ -17,17 +72,42 @@ def get_intent(transcribed_text: str, speaker_name: str):
     Determine if this is a locomotion command or a conversational query.
     Return ONLY a raw JSON object matching one of these schemas:
     
-    If locomotion (e.g., move forward, turn left):
-    {{"type": "locomotion", "action": "forward/backward/left/right"}}
+    If locomotion:
+    {{"type": "locomotion", "action": "forward"}} (or backward, left, right)
     
-    If conversation (e.g., who am I, what is your name):
-    {{"type": "conversation", "response": "Your textual answer here, addressing the speaker by name if relevant."}}
+    If conversation:
+    {{"type": "conversation", "response": "Your textual answer here."}}
     """
     
-    try:
-        response = model.generate_content(prompt)
-        clean_text = response.text.replace('```json', '').replace('```', '').strip()
-        return json.loads(clean_text)
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
-        return {"type": "conversation", "response": f"Hello {speaker_name}, I heard you say: {transcribed_text}"}
+    for model_name in CANDIDATE_MODELS:
+        try:
+            model = genai.GenerativeModel(model_name)
+            
+            # Try generation without mime_type first to maximize compatibility across models
+            try:
+                response = model.generate_content(prompt)
+                parsed = clean_extract_json(response.text)
+                if parsed and "type" in parsed:
+                    return parsed
+            except Exception:
+                pass
+                
+            # Fallback try with application/json config
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(response_mime_type="application/json")
+            )
+            parsed = clean_extract_json(response.text)
+            if parsed and "type" in parsed:
+                return parsed
+
+        except Exception as e:
+            continue
+            
+    # Default conversation fallback if AI generation returns free-form text or rate-limited
+    return {
+        "type": "conversation", 
+        "response": f"I am your virtual AI robot! Regarding '{transcribed_text}': It is fascinating to explore."
+    }
+
+

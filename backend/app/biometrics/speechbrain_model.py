@@ -41,9 +41,10 @@ def enroll_speaker(name: str, audio_path: str):
 
 def identify_speaker(audio_path: str):
     try:
+        if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 1000:
+            return "User"
         unknown_embedding = extract_embedding(audio_path)
     except Exception as e:
-        print(f"Extraction Error: {e}")
         return "Unknown"
 
     best_match = "Unknown"

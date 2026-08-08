@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*$py.class
+
+# Temporary audio files & profiles
+temp_*.wav
+*.wav
+*.npy
+
+# Node dependencies & builds
+node_modules/
+dist/
+.vite/
+
+# Environment & IDE
+.env
+.vscode/
+.idea/
