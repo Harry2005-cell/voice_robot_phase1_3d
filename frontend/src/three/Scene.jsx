@@ -11,7 +11,7 @@ const Robot = ({ command }) => {
   const { actions, names } = useAnimations(animations, robotRef);
   
   const targetPos = useRef(new THREE.Vector3(0, 0, 0)); 
-  const targetRot = useRef(0);
+  const targetRot = useRef(Math.PI);
   const jumpHeight = useRef(0);
   
   // State to track movement status
@@ -39,7 +39,7 @@ const Robot = ({ command }) => {
       targetRot.current += Math.PI * 2;
     } else if (action.includes('reset') || action.includes('center')) {
       targetPos.current.set(0, 0, 0);
-      targetRot.current = 0;
+      targetRot.current = Math.PI;
       jumpHeight.current = 0;
     }
 
