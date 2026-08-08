@@ -4,10 +4,21 @@ import re
 import os
 
 api_key = os.getenv("GEMINI_API_KEY", "")
+
+# Load from local .env if not found in environment variables
+if not api_key:
+    env_path = os.path.join(os.path.dirname(__file__), "../../.env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                if line.startswith("GEMINI_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip()
+                    break
+
 if api_key:
     genai.configure(api_key=api_key)
 
-CANDIDATE_MODELS = ["gemma-4-26b-a4b-it", "gemini-2.0-flash", "gemini-1.5-flash"]
+CANDIDATE_MODELS = ["models/gemini-flash-latest", "models/gemini-2.0-flash", "models/gemini-pro-latest", "models/gemini-2.0-flash-lite"]
 
 def parse_rule_based_intent(text: str):
     """Fast & reliable local keyword matching for locomotion commands."""
