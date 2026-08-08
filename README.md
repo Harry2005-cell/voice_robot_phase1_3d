@@ -31,8 +31,8 @@ Before you begin, ensure you have the following installed on your machine:
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
-cd YOUR_REPOSITORY_NAME
+git clone [https://github.com/Harry2005-cell/voice_robot_phase1_3d](https://github.com/Harry2005-cell/voice_robot_phase1_3d.git)
+cd voice_robot_phase1_3d
 
 
 2. Backend Setup (Python / FastAPI)
