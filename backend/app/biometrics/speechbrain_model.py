@@ -42,24 +42,26 @@ def enroll_speaker(name: str, audio_path: str):
 def identify_speaker(audio_path: str):
     try:
         if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 1000:
-            return "User"
+            return "User", 100
         unknown_embedding = extract_embedding(audio_path)
     except Exception as e:
-        return "Unknown"
+        return "Unknown", 0
 
     best_match = "Unknown"
-    highest_score = 0
+    highest_score = 0.0
     
     if not os.path.exists(PROFILE_DIR):
-        return "Unknown"
+        return "Unknown", 0
 
     for file in os.listdir(PROFILE_DIR):
         if file.endswith(".npy"):
             known_embedding = np.load(os.path.join(PROFILE_DIR, file))
-            similarity = 1 - cosine(unknown_embedding, known_embedding)
+            similarity = float(1 - cosine(unknown_embedding, known_embedding))
             
-            if similarity > highest_score and similarity > SIMILARITY_THRESHOLD:
+            if similarity > highest_score:
                 highest_score = similarity
-                best_match = file.replace(".npy", "")
+                if similarity > SIMILARITY_THRESHOLD:
+                    best_match = file.replace(".npy", "")
                 
-    return best_match
+    score_percent = min(100, max(0, int(highest_score * 100)))
+    return best_match, score_percent

@@ -6,21 +6,18 @@ import * as THREE from 'three';
 const Robot = ({ command }) => {
   const robotRef = useRef();
   
-  // 1. Load the 3D GLTF model and animations from public/robot.glb
+  // 1. Load 3D GLTF model and animations from public/robot.glb
   const { scene, animations } = useGLTF('/robot.glb'); 
   const { actions, names } = useAnimations(animations, robotRef);
   
   const targetPos = useRef(new THREE.Vector3(0, 0, 0)); 
   const targetRot = useRef(0);
+  const jumpHeight = useRef(0);
   
   // State to track movement status
   const [isMoving, setIsMoving] = useState(false);
 
   useEffect(() => {
-    if (names && names.length > 0) {
-      console.log("Available 3D Animations:", names);
-    }
-    
     if (!command || command.type !== 'locomotion') return;
 
     const step = 2;
@@ -29,30 +26,35 @@ const Robot = ({ command }) => {
 
     if (action.includes('forward') || action.includes('front') || action.includes('ahead') || action.includes('straight')) {
       targetPos.current.z -= step;
-    }
-    if (action.includes('backward') || action.includes('back') || action.includes('reverse')) {
+    } else if (action.includes('backward') || action.includes('back') || action.includes('reverse')) {
       targetPos.current.z += step;
-    }
-    if (action.includes('left')) {
+    } else if (action.includes('left')) {
       targetRot.current += angleStep;
-    }
-    if (action.includes('right')) {
+    } else if (action.includes('right')) {
       targetRot.current -= angleStep;
+    } else if (action.includes('jump') || action.includes('hop')) {
+      jumpHeight.current = 1.8;
+      setTimeout(() => { jumpHeight.current = 0; }, 600);
+    } else if (action.includes('spin') || action.includes('dance') || action.includes('twirl')) {
+      targetRot.current += Math.PI * 2;
+    } else if (action.includes('reset') || action.includes('center')) {
+      targetPos.current.set(0, 0, 0);
+      targetRot.current = 0;
+      jumpHeight.current = 0;
     }
 
-    // Trigger movement state
+    // Trigger movement animation state
     setIsMoving(true);
     
-    // Reset movement state after 1.5s
     const timer = setTimeout(() => {
       setIsMoving(false);
     }, 1500);
 
     return () => clearTimeout(timer);
 
-  }, [command, names]);
+  }, [command]);
 
-  // 2. Play or stop the walking/movement animation dynamically
+  // 2. Play or stop walking/running animation
   useEffect(() => {
     if (!names || names.length === 0 || !actions) return;
 
@@ -69,7 +71,14 @@ const Robot = ({ command }) => {
 
   useFrame(() => {
     if (robotRef.current) {
-      robotRef.current.position.lerp(targetPos.current, 0.05);
+      // Lerp X and Z coordinates
+      robotRef.current.position.x = THREE.MathUtils.lerp(robotRef.current.position.x, targetPos.current.x, 0.05);
+      robotRef.current.position.z = THREE.MathUtils.lerp(robotRef.current.position.z, targetPos.current.z, 0.05);
+      
+      // Lerp Y height for jumps
+      robotRef.current.position.y = THREE.MathUtils.lerp(robotRef.current.position.y, jumpHeight.current, 0.15);
+      
+      // Lerp Y rotation
       robotRef.current.rotation.y = THREE.MathUtils.lerp(robotRef.current.rotation.y, targetRot.current, 0.1);
     }
   });
@@ -77,6 +86,25 @@ const Robot = ({ command }) => {
   return (
     <primitive ref={robotRef} object={scene} scale={1.5} position={[0, 0, 0]} castShadow />
   );
+};
+
+// Camera Controller Component for switching views dynamically
+const CameraController = ({ viewMode }) => {
+  const cameraRef = useRef();
+
+  useEffect(() => {
+    if (!cameraRef.current) return;
+    if (viewMode === 'top') {
+      cameraRef.current.position.set(0, 10, 0.01);
+    } else if (viewMode === 'front') {
+      cameraRef.current.position.set(0, 2, 7);
+    } else {
+      // Isometric view default
+      cameraRef.current.position.set(5, 5, 5);
+    }
+  }, [viewMode]);
+
+  return <PerspectiveCamera ref={cameraRef} makeDefault position={[5, 5, 5]} />;
 };
 
 // Fallback visual box while 3D GLTF model is loading
@@ -87,11 +115,11 @@ const FallbackBox = () => (
   </mesh>
 );
 
-export default function RobotScene({ lastCommand }) {
+export default function RobotScene({ lastCommand, cameraView = 'isometric' }) {
   return (
-    <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', background: '#121212' }}>
+    <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', background: '#121212', position: 'relative' }}>
       <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[5, 5, 5]} />
+        <CameraController viewMode={cameraView} />
         <OrbitControls target={[0, 0, 0]} /> 
         
         <ambientLight intensity={0.8} />

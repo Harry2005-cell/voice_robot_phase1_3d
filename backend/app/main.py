@@ -36,10 +36,10 @@ async def process_command(text: str = Form(...), audio: UploadFile = File(...)):
         f.write(await audio.read())
         
     # 1. Identify Speaker from Audio
-    speaker_name = identify_speaker(file_location)
+    speaker_name, match_score = identify_speaker(file_location)
     os.remove(file_location)
     
     # 2. Get Intent from Gemini
     intent = get_intent(text, speaker_name)
     
-    return {"speaker": speaker_name, "intent": intent}
+    return {"speaker": speaker_name, "match_score": match_score, "intent": intent}

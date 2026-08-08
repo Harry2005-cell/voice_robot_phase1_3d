@@ -21,6 +21,12 @@ def parse_rule_based_intent(text: str):
         return {"type": "locomotion", "action": "left"}
     if "right" in text_lower:
         return {"type": "locomotion", "action": "right"}
+    if any(w in text_lower for w in ["jump", "hop", "bounce"]):
+        return {"type": "locomotion", "action": "jump"}
+    if any(w in text_lower for w in ["spin", "dance", "twirl", "rotate"]):
+        return {"type": "locomotion", "action": "spin"}
+    if any(w in text_lower for w in ["reset", "center", "origin", "stop"]):
+        return {"type": "locomotion", "action": "reset"}
         
     return None
 
