@@ -27,6 +27,11 @@ export default function App() {
     }
   };
 
+  const getApiUrl = () => {
+    const host = window.location.hostname || 'localhost';
+    return `http://${host}:8000`;
+  };
+
   const handleEnroll = async () => {
     if (!enrollName) return alert("Enter a name first");
     setStatus('Recording Enrollment (5s)... Keep speaking.');
@@ -39,7 +44,7 @@ export default function App() {
       formData.append('name', enrollName);
       formData.append('audio', audioBlob, 'enroll.wav');
 
-      const response = await fetch('http://localhost:8000/api/enroll', { method: 'POST', body: formData });
+      const response = await fetch(`${getApiUrl()}/api/enroll`, { method: 'POST', body: formData });
       
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
@@ -67,7 +72,7 @@ export default function App() {
         formData.append('audio', dummyBlob, 'command.wav');
       }
 
-      const res = await fetch('http://localhost:8000/api/command', { method: 'POST', body: formData });
+      const res = await fetch(`${getApiUrl()}/api/command`, { method: 'POST', body: formData });
       
       if (!res.ok) {
         throw new Error(`Server returned ${res.status}`);

@@ -6,7 +6,7 @@ import socket
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Add backend directory to sys.path so modules can be imported directly
+# Add backend directory to sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.join(CURRENT_DIR, "backend")
 if BACKEND_DIR not in sys.path:
@@ -16,133 +16,17 @@ try:
     from app.ai.gemini_client import get_intent, parse_rule_based_intent, get_api_key
     from app.biometrics.speechbrain_model import identify_speaker, enroll_speaker
 except ImportError:
-    # Direct import fallback if needed
     sys.path.append(os.path.join(BACKEND_DIR, "app"))
     from ai.gemini_client import get_intent, parse_rule_based_intent, get_api_key
     from biometrics.speechbrain_model import identify_speaker, enroll_speaker
 
-# Set Streamlit page configuration
+# Streamlit Page Config
 st.set_page_config(
-    page_title="Harry AI - 3D Voice Robot",
+    page_title="Harry AI - 3D Voice Controlled Robot",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Custom Cyberpunk / Futuristic Dark Theme CSS
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
-    
-    /* Background and global styles */
-    .stApp {
-        background-color: #0a0a0a;
-        color: #e0e0e0;
-        font-family: 'Rajdhani', sans-serif;
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
-        font-family: 'Orbitron', sans-serif !important;
-        letter-spacing: 1.5px;
-    }
-    
-    .main-title {
-        color: #00f3ff;
-        text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
-        font-size: 2.2rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        margin-bottom: 0px;
-    }
-    
-    .sub-title {
-        color: #888888;
-        font-size: 0.95rem;
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-    }
-    
-    /* Glowing HUD Cards */
-    .hud-card {
-        background: linear-gradient(145deg, #141414, #0d0d0d);
-        border: 1px solid #222222;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    }
-    
-    .hud-card-accent {
-        background: linear-gradient(145deg, #181c20, #0d1216);
-        border: 1px solid #00f3ff44;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
-    }
-    
-    /* Status Badges */
-    .badge-verified {
-        display: inline-block;
-        background: rgba(0, 243, 255, 0.12);
-        color: #00f3ff;
-        border: 1px solid #00f3ff;
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-    
-    .badge-guest {
-        display: inline-block;
-        background: rgba(255, 152, 0, 0.12);
-        color: #ff9800;
-        border: 1px solid #ff9800;
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-    
-    /* Terminal display */
-    .terminal-box {
-        background-color: #050505;
-        border: 1px solid #2a2a2a;
-        border-left: 3px solid #00f3ff;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-family: 'Courier New', Courier, monospace;
-        color: #00f3ff;
-        font-size: 0.9rem;
-        min-height: 80px;
-        white-space: pre-wrap;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-    }
-
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(90deg, #161a1d, #1c2228);
-        border: 1px solid #00f3ff88;
-        color: #00f3ff;
-        font-family: 'Rajdhani', sans-serif;
-        font-weight: 700;
-        font-size: 0.95rem;
-        letter-spacing: 1px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        background: #00f3ff;
-        color: #000000;
-        box-shadow: 0 0 15px rgba(0, 243, 255, 0.7);
-        border-color: #00f3ff;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # Helper function to get local IP address
 def get_local_ip():
@@ -155,607 +39,912 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
-# Initialize Session State
-if "last_action" not in st.session_state:
-    st.session_state.last_action = "reset"
-if "action_seq" not in st.session_state:
-    st.session_state.action_seq = 0
-if "speaker_name" not in st.session_state:
-    st.session_state.speaker_name = "Guest"
-if "match_score" not in st.session_state:
-    st.session_state.match_score = 0
-if "terminal_msg" not in st.session_state:
-    st.session_state.terminal_msg = "🤖 SYSTEM READY. Awaiting vocal or textual command..."
-if "camera_view" not in st.session_state:
-    st.session_state.camera_view = "isometric"
-if "tts_text" not in st.session_state:
-    st.session_state.tts_text = ""
+local_ip = get_local_ip()
+api_key = get_api_key()
 
-# Sidebar Settings & Diagnostics
+# Custom Sci-Fi Dark Theme CSS
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap');
+    
+    .stApp {
+        background-color: #07090c;
+        color: #e0e6ed;
+        font-family: 'Rajdhani', sans-serif;
+    }
+    
+    .main-title {
+        color: #00f3ff;
+        text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 2.1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 0px;
+        letter-spacing: 2px;
+    }
+    
+    .sub-title {
+        color: #8fa0b3;
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        letter-spacing: 1px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Sidebar Configuration
 with st.sidebar:
-    st.markdown("<h2 style='color:#00f3ff; font-size:1.3rem;'>⚡ CONTROL UPLINK</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#00f3ff; font-family:Orbitron; font-size:1.2rem; letter-spacing:1px;'>⚡ CONTROL CENTER</h2>", unsafe_allow_html=True)
     
     # Network status info
-    local_ip = get_local_ip()
     st.markdown(f"""
-    <div style='background:#111; padding:10px; border-radius:8px; border:1px solid #333; font-size:0.85rem; margin-bottom:15px;'>
-        <div style='color:#888;'>🌐 Network Deployment:</div>
-        <div style='color:#00f3ff; font-weight:bold;'>http://{local_ip}:8501</div>
-        <div style='color:#666; font-size:0.75rem; margin-top:4px;'>Open to all LAN & public devices</div>
+    <div style='background:rgba(0, 243, 255, 0.05); padding:12px; border-radius:10px; border:1px solid rgba(0, 243, 255, 0.2); font-size:0.85rem; margin-bottom:15px;'>
+        <div style='color:#8fa0b3; font-weight:600;'>🌐 Multi-Network Uplink:</div>
+        <div style='color:#00f3ff; font-weight:bold; font-size:1rem; margin-top:2px;'>http://{local_ip}:8501</div>
+        <div style='color:#6a7c92; font-size:0.75rem; margin-top:4px;'>Accessible from any phone, PC, or tablet on LAN</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Gemini API Key configuration
-    st.markdown("### 🔑 AI Core Settings")
-    current_key = get_api_key()
-    api_key_input = st.text_input(
+    # Gemini API Key setup
+    st.markdown("### 🔑 Gemini AI Core")
+    gemini_key_input = st.text_input(
         "Google Gemini API Key",
-        value=current_key,
+        value=api_key,
         type="password",
-        placeholder="Enter AI Studio API Key...",
-        help="Obtain an API key from Google AI Studio (aistudio.google.com)"
+        placeholder="AI Studio API Key...",
+        help="Enables conversational AI intelligence and answers."
     )
-    if api_key_input:
-        os.environ["GEMINI_API_KEY"] = api_key_input
+    if gemini_key_input:
+        os.environ["GEMINI_API_KEY"] = gemini_key_input
+        api_key = gemini_key_input
 
     st.markdown("---")
-    
-    # Camera Presets
-    st.markdown("### 🎥 3D Camera Presets")
-    cam_col1, cam_col2, cam_col3 = st.columns(3)
-    with cam_col1:
-        if st.button("Isometric", key="cam_iso"):
-            st.session_state.camera_view = "isometric"
-            st.rerun()
-    with cam_col2:
-        if st.button("Top", key="cam_top"):
-            st.session_state.camera_view = "top"
-            st.rerun()
-    with cam_col3:
-        if st.button("Front", key="cam_front"):
-            st.session_state.camera_view = "front"
-            st.rerun()
+    st.markdown("### 🎙️ Voice Control Guide")
+    st.markdown("""
+    **Supported Voice Commands:**
+    - `Move Forward` / `Front` / `Ahead`
+    - `Move Backward` / `Back` / `Reverse`
+    - `Turn Left` / `Go Left`
+    - `Turn Right` / `Go Right`
+    - `Jump` / `Hop` / `Bounce`
+    - `Spin` / `Dance` / `Rotate`
+    - `Reset` / `Center` / `Stop`
+    - *Any Conversational Question* (e.g. *"Who are you?"*, *"Tell me about Mars"*)
+    """)
 
     st.markdown("---")
-    st.markdown("### 🛠️ Quick Movement Pad")
-    
-    col_up1, col_up2, col_up3 = st.columns([1, 2, 1])
-    with col_up2:
-        if st.button("⬆️ FORWARD", use_container_width=True):
-            st.session_state.last_action = "forward"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: FORWARD movement (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Moving forward"
-            st.rerun()
-
-    col_mid1, col_mid2 = st.columns(2)
-    with col_mid1:
-        if st.button("⬅️ LEFT", use_container_width=True):
-            st.session_state.last_action = "left"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: Turn LEFT (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Turning left"
-            st.rerun()
-    with col_mid2:
-        if st.button("➡️ RIGHT", use_container_width=True):
-            st.session_state.last_action = "right"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: Turn RIGHT (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Turning right"
-            st.rerun()
-
-    col_dn1, col_dn2, col_dn3 = st.columns([1, 2, 1])
-    with col_dn2:
-        if st.button("⬇️ BACKWARD", use_container_width=True):
-            st.session_state.last_action = "backward"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: BACKWARD movement (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Moving backward"
-            st.rerun()
-
-    col_act1, col_act2, col_act3 = st.columns(3)
-    with col_act1:
-        if st.button("🦘 JUMP", use_container_width=True):
-            st.session_state.last_action = "jump"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: Kinetic JUMP (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Jumping"
-            st.rerun()
-    with col_act2:
-        if st.button("🔄 SPIN", use_container_width=True):
-            st.session_state.last_action = "spin"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Executing: 360 SPIN (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Spinning"
-            st.rerun()
-    with col_act3:
-        if st.button("🎯 RESET", use_container_width=True):
-            st.session_state.last_action = "reset"
-            st.session_state.action_seq += 1
-            st.session_state.terminal_msg = f"Position RESET to Origin (Seq #{st.session_state.action_seq})"
-            st.session_state.tts_text = "Resetting position"
-            st.rerun()
-
-# Main App Header
-st.markdown("<div class='main-title'>🤖 HARRY AI: 3D VOICE ROBOT</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-title'>Edge-to-Cloud Biometric Voice Control • Three.js Digital Twin • Gemini Intelligence</div>", unsafe_allow_html=True)
-
-# Biometric & Status HUD Bar
-status_col1, status_col2 = st.columns([1, 1])
-
-with status_col1:
-    st.markdown(f"""
-    <div style='display:flex; align-items:center; gap:12px; background:#141414; padding:8px 16px; border-radius:30px; border:1px solid #2a2a2a;'>
-        <span style='color:#888; font-size:0.85rem;'>SYSTEM STATUS:</span>
-        <span style='color:#00f3ff; font-weight:bold; font-size:0.9rem;'>ONLINE (PORT 8501)</span>
-        <span style='color:#444;'>|</span>
-        <span style='color:#888; font-size:0.85rem;'>ACTIVE ACTION:</span>
-        <span style='color:#4caf50; font-weight:bold; text-transform:uppercase;'>{st.session_state.last_action}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-with status_col2:
-    is_verified = st.session_state.match_score > 70 and st.session_state.speaker_name not in ["Guest", "Unknown"]
-    badge_class = "badge-verified" if is_verified else "badge-guest"
-    badge_text = f"VERIFIED: {st.session_state.speaker_name.upper()} ({st.session_state.match_score}% MATCH)" if is_verified else f"IDENTITY: {st.session_state.speaker_name.upper()} ({st.session_state.match_score}% MATCH)"
-    st.markdown(f"""
-    <div style='display:flex; align-items:center; justify-content:flex-end; gap:12px; padding:8px 0px;'>
-        <span style='color:#888; font-size:0.85rem;'>BIOMETRIC UPLINK:</span>
-        <span class='{badge_class}'>{badge_text}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-
-# Core Layout: Left column for Controls & AI, Right column for 3D Three.js Visualizer
-col_left, col_right = st.columns([1, 1.3])
-
-with col_left:
-    tab_command, tab_enroll, tab_raw = st.tabs(["🎤 Voice & AI Commands", "👤 Biometric Enrollment", "📊 Terminal Logs"])
-    
-    with tab_command:
-        st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
-        st.markdown("<h3 style='color:#00f3ff; font-size:1.1rem; margin-top:0;'>Command Interface</h3>", unsafe_allow_html=True)
-        
-        # Live Microphone Input (Streamlit native) or Optional File Upload
-        input_mode = st.radio(
-            "Audio Input Method:",
-            ["🎙️ Live Microphone", "📁 Upload Audio File (Optional)"],
-            horizontal=True,
-            key="input_mode_radio"
-        )
-        
-        audio_data = None
-        if input_mode == "🎙️ Live Microphone":
-            # Streamlit native live microphone recorder (st.audio_input)
-            if hasattr(st, "audio_input"):
-                audio_data = st.audio_input("Record Voice Command", key="cmd_live_mic")
-            else:
-                st.info("💡 Click the 'In-Browser Speech Recognition' button on the 3D scene below or type a command directly.")
+    st.markdown("### 👤 Biometric Profiles")
+    profile_dir = os.path.join(CURRENT_DIR, "backend", "app", "biometrics", "profiles")
+    if os.path.exists(profile_dir):
+        profiles = [f.replace(".npy", "") for f in os.listdir(profile_dir) if f.endswith(".npy")]
+        if profiles:
+            st.write(f"Enrolled Operators ({len(profiles)}):")
+            for p in profiles:
+                st.markdown(f"- 🔒 **{p}** (Active Voiceprint)")
         else:
-            audio_data = st.file_uploader("Upload Audio File (.wav, .mp3)", type=["wav", "mp3", "ogg"], key="cmd_audio_upload")
-        
-        # Text prompt input
-        text_prompt = st.text_input(
-            "💬 Natural Language Speech / Command Prompt",
-            placeholder="e.g. 'move forward', 'turn left', 'jump', 'tell me about black holes'",
-            key="cmd_text"
-        )
-        
-        if st.button("🚀 Process Voice / Command", use_container_width=True, key="btn_process"):
-            if not text_prompt and not audio_data:
-                st.warning("Please record your voice, enter a command, or click quick locomotion buttons.")
-            else:
-                speaker_id = "User"
-                match_val = 100
+            st.info("No operator voiceprints registered yet. Enroll below.")
+    else:
+        st.info("No biometric profiles yet.")
 
-                # 1. Biometric speaker identification if audio is present
-                if audio_data:
-                    temp_audio_path = os.path.join(CURRENT_DIR, "temp_command.wav")
-                    with open(temp_audio_path, "wb") as f:
-                        f.write(audio_data.getvalue() if hasattr(audio_data, "getvalue") else audio_data.getbuffer())
-                    
-                    speaker_id, match_val = identify_speaker(temp_audio_path)
-                    try:
-                        os.remove(temp_audio_path)
-                    except Exception:
-                        pass
+# Main Dashboard Header
+st.markdown("<div class='main-title'>🤖 HARRY AI: REAL-TIME VOICE-CONTROLLED ROBOT</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Direct In-Browser Voice Recognition • 3D Cybernetic Digital Twin • Gemini Intelligence • Neural Biometrics</div>", unsafe_allow_html=True)
 
-                st.session_state.speaker_name = speaker_id
-                st.session_state.match_score = match_val
+# Build Comprehensive In-Browser Real-Time Voice Robot Application Component
+robot_console_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap');
 
-                # 2. Intent parsing with Gemini & Rule-based engine
-                query_text = text_prompt if text_prompt else "Process voice command"
-                intent_res = get_intent(query_text, speaker_id)
+        * {{
+            box-sizing: border-box;
+            user-select: none;
+        }}
 
-                if intent_res:
-                    intent_type = str(intent_res.get("type", "")).lower()
-                    if intent_type == "locomotion" or "action" in intent_res:
-                        act = intent_res.get("action", "forward")
-                        st.session_state.last_action = act
-                        st.session_state.action_seq += 1
-                        st.session_state.terminal_msg = f"Speaker: {speaker_id} ({match_val}% match)\nIntent: LOCOMOTION -> [{act.upper()}]"
-                        st.session_state.tts_text = f"Executing {act}"
-                    else:
-                        reply = intent_res.get("response", "Command processed.")
-                        st.session_state.terminal_msg = f"Speaker: {speaker_id} ({match_val}% match)\nAI Response: {reply}"
-                        st.session_state.tts_text = reply
-                
-                st.rerun()
+        body {{
+            margin: 0;
+            padding: 10px;
+            background-color: #07090c;
+            color: #e0e6ed;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }}
 
+        .hud-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }}
 
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Real-time Terminal Output
-        st.markdown("<div style='color:#888; font-size:0.85rem; margin-bottom:4px;'>ROBOT HUD TERMINAL</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='terminal-box'>{st.session_state.terminal_msg}</div>", unsafe_allow_html=True)
-
-    with tab_enroll:
-        st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
-        st.markdown("<h3 style='color:#00f3ff; font-size:1.1rem; margin-top:0;'>Operator Biometric Enrollment</h3>", unsafe_allow_html=True)
-        st.write("Enroll your voiceprint into the SpeechBrain neural biometric database for instant identity verification.")
-        
-        enroll_name = st.text_input("Operator Name", placeholder="e.g. Harshal", key="enroll_name")
-        
-        enroll_mode = st.radio(
-            "Enrollment Sample Source:",
-            ["🎙️ Record Voice Sample via Mic", "📁 Upload .wav File"],
-            horizontal=True,
-            key="enroll_mode_radio"
-        )
-        
-        enroll_audio_data = None
-        if enroll_mode == "🎙️ Record Voice Sample via Mic":
-            if hasattr(st, "audio_input"):
-                enroll_audio_data = st.audio_input("Speak for 3-5 seconds to enroll voice", key="enroll_live_mic")
-            else:
-                st.info("💡 Record a sample using your microphone or switch to upload.")
-        else:
-            enroll_audio_data = st.file_uploader("Upload Voice Sample (.wav)", type=["wav"], key="enroll_audio_file")
-        
-        if st.button("💾 Enroll Voiceprint", use_container_width=True, key="btn_enroll"):
-            if not enroll_name or not enroll_audio_data:
-                st.warning("Please provide both an operator name and record/upload a voice sample.")
-            else:
-                temp_enroll_path = os.path.join(CURRENT_DIR, f"temp_enroll_{enroll_name}.wav")
-                with open(temp_enroll_path, "wb") as f:
-                    f.write(enroll_audio_data.getvalue() if hasattr(enroll_audio_data, "getvalue") else enroll_audio_data.getbuffer())
-                
-                success = enroll_speaker(enroll_name, temp_enroll_path)
-                try:
-                    os.remove(temp_enroll_path)
-                except Exception:
-                    pass
-
-                if success:
-                    st.success(f"Voiceprint for '{enroll_name}' successfully enrolled!")
-                    st.session_state.speaker_name = enroll_name
-                    st.session_state.match_score = 100
-                    st.session_state.terminal_msg = f"Biometric database updated: Profile created for {enroll_name}"
-                    st.session_state.tts_text = f"Biometric enrollment complete for {enroll_name}"
-                    st.rerun()
-                else:
-                    st.error("Failed to enroll voiceprint. Please ensure valid audio data.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-
-    with tab_raw:
-        st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
-        st.markdown("### System Telemetry")
-        st.json({
-            "active_action": st.session_state.last_action,
-            "action_sequence": st.session_state.action_seq,
-            "identified_speaker": st.session_state.speaker_name,
-            "confidence_score": f"{st.session_state.match_score}%",
-            "camera_preset": st.session_state.camera_view,
-            "network_ip": local_ip
-        })
-        st.markdown("</div>", unsafe_allow_html=True)
-
-with col_right:
-    st.markdown("<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#00f3ff; font-size:1.1rem; margin:0;'>3D Digital Twin Visualizer</h3>", unsafe_allow_html=True)
-    st.markdown(f"<span style='color:#888; font-size:0.8rem;'>VIEW: {st.session_state.camera_view.upper()}</span>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # 3D Three.js Interactive WebGL Component
-    threejs_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-            body {{
-                margin: 0;
-                overflow: hidden;
-                background-color: #080808;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        @media (max-width: 900px) {{
+            .hud-grid {{
+                grid-template-columns: 1fr;
             }}
-            #canvas-container {{
-                width: 100%;
-                height: 520px;
-                position: relative;
-                border-radius: 12px;
-                border: 1px solid #2a2a2a;
-                box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.1);
-            }}
-            #speech-controls {{
-                position: absolute;
-                bottom: 12px;
-                left: 12px;
-                z-index: 10;
-                display: flex;
-                gap: 8px;
-            }}
-            .hud-btn {{
-                background: rgba(10, 10, 10, 0.85);
-                border: 1px solid #00f3ff;
-                color: #00f3ff;
-                padding: 6px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: bold;
-                cursor: pointer;
-                backdrop-filter: blur(5px);
-                transition: all 0.2s ease;
-            }}
-            .hud-btn:hover {{
-                background: #00f3ff;
-                color: #000;
-                box-shadow: 0 0 10px #00f3ff;
-            }}
-            #hud-overlay {{
-                position: absolute;
-                top: 12px;
-                left: 12px;
-                z-index: 10;
-                color: #00f3ff;
-                font-size: 11px;
-                font-family: monospace;
-                background: rgba(0, 0, 0, 0.6);
-                padding: 6px 10px;
-                border-radius: 4px;
-                border-left: 2px solid #00f3ff;
-            }}
-        </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    </head>
-    <body>
-        <div id="canvas-container">
-            <div id="hud-overlay">
-                POSE: [{st.session_state.last_action.upper()}] | SEQ: #{st.session_state.action_seq}
-            </div>
-            <div id="speech-controls">
-                <button class="hud-btn" id="mic-btn" onclick="startSpeechRecognition()">🎤 In-Browser Speech Recognition</button>
-            </div>
+        }}
+
+        .panel {{
+            background: linear-gradient(160deg, #10141a, #0b0e12);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }}
+
+        .panel-header {{
+            font-family: 'Orbitron', sans-serif;
+            color: #00f3ff;
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+            padding-bottom: 8px;
+            letter-spacing: 1px;
+        }}
+
+        /* Big Voice Control Button */
+        .voice-master-btn {{
+            width: 100%;
+            background: linear-gradient(135deg, #00f3ff, #0077ff);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            padding: 18px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.15rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+            transition: all 0.25s ease;
+            margin-bottom: 15px;
+        }}
+
+        .voice-master-btn:hover {{
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.75);
+            transform: scale(1.02);
+        }}
+
+        .voice-master-btn.listening {{
+            background: linear-gradient(135deg, #ff0055, #ff5500);
+            color: #fff;
+            box-shadow: 0 0 35px rgba(255, 0, 85, 0.7);
+            animation: pulse-border 1.2s infinite alternate;
+        }}
+
+        @keyframes pulse-border {{
+            0% {{ box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); }}
+            100% {{ box-shadow: 0 0 45px rgba(255, 0, 85, 0.9); }}
+        }}
+
+        /* Live Waveform */
+        .audio-wave {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 32px;
+            margin-bottom: 15px;
+        }}
+
+        .audio-bar {{
+            width: 5px;
+            height: 8px;
+            background: #00f3ff;
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }}
+
+        .audio-bar.active {{
+            animation: wave 0.5s infinite alternate;
+        }}
+
+        @keyframes wave {{
+            0% {{ height: 6px; background: #00f3ff; }}
+            100% {{ height: 30px; background: #ff0055; }}
+        }}
+
+        /* Speech Recognition Status Box */
+        .speech-transcript-box {{
+            background: #05070a;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }}
+
+        .speech-label {{
+            font-size: 0.75rem;
+            color: #8fa0b3;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }}
+
+        .speech-text {{
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #00f3ff;
+            word-break: break-word;
+        }}
+
+        /* Directional Pad Grid */
+        .dpad-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }}
+
+        .hud-btn {{
+            background: rgba(16, 25, 35, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #00f3ff;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            text-align: center;
+        }}
+
+        .hud-btn:hover {{
+            background: #00f3ff;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+        }}
+
+        .hud-btn.accent {{
+            border-color: rgba(255, 152, 0, 0.4);
+            color: #ff9800;
+        }}
+
+        .hud-btn.accent:hover {{
+            background: #ff9800;
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+        }}
+
+        /* Terminal Logs */
+        .terminal-display {{
+            background: #030406;
+            border: 1px solid #1a222d;
+            border-left: 3px solid #00f3ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00f3ff;
+            font-size: 0.85rem;
+            min-height: 80px;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }}
+
+        /* 3D Canvas Viewport */
+        #canvas-wrap {{
+            width: 100%;
+            height: 520px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+        }}
+
+        #overlay-status {{
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 10;
+            background: rgba(5, 10, 16, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            color: #00f3ff;
+            font-family: monospace;
+            pointer-events: none;
+        }}
+
+        #camera-controls {{
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+        }}
+
+        .cam-btn {{
+            background: rgba(10, 15, 22, 0.85);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            color: #8fa0b3;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: bold;
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .cam-btn.active, .cam-btn:hover {{
+            background: #00f3ff;
+            color: #000;
+        }}
+
+        .switch-row {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<div class="hud-grid">
+
+    <!-- LEFT CONTROL PANEL -->
+    <div class="panel">
+        <div class="panel-header">
+            <span>🎙️ VOICE COMMAND HUB</span>
+            <span id="speaker-badge" style="font-size:0.75rem; color:#4caf50; background:rgba(76,175,80,0.1); padding:3px 8px; border-radius:12px; border:1px solid #4caf50;">
+                BIOMETRICS: READY
+            </span>
         </div>
 
-        <script>
-            // 1. Scene & Camera Setup
-            const container = document.getElementById('canvas-container');
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
-            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+        <!-- Master Voice Trigger Button -->
+        <button id="voice-btn" class="voice-master-btn" onclick="toggleVoiceListening()">
+            <span id="voice-icon">🎤</span>
+            <span id="voice-label">CLICK TO TALK (VOICE CONTROL)</span>
+        </button>
 
-            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            
-            // Set camera position based on preset
-            const preset = "{st.session_state.camera_view}";
-            if (preset === "top") {{
-                camera.position.set(0, 12, 0.01);
-            }} else if (preset === "front") {{
-                camera.position.set(0, 2.5, 7.5);
+        <!-- Dynamic Audio Wave Visualizer -->
+        <div class="audio-wave" id="wave-container">
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+        </div>
+
+        <!-- Live Recognized Speech Box -->
+        <div class="speech-transcript-box">
+            <div class="speech-label">Real-Time Speech Recognized</div>
+            <div class="speech-text" id="live-speech">"Ready. Click the microphone and say 'Move forward', 'Jump', or 'Spin'!"</div>
+        </div>
+
+        <!-- Hands-free & Audio Settings -->
+        <div class="switch-row">
+            <span>🔊 Robot Voice Talkback (TTS):</span>
+            <label style="cursor:pointer; color:#00f3ff;">
+                <input type="checkbox" id="tts-toggle" checked> Enabled
+            </label>
+        </div>
+
+        <div class="switch-row">
+            <span>🔄 Continuous Voice Listening:</span>
+            <label style="cursor:pointer; color:#00f3ff;">
+                <input type="checkbox" id="continuous-toggle" onchange="toggleContinuousMode(this.checked)"> Hands-Free
+            </label>
+        </div>
+
+        <!-- Quick Directional & Action Buttons -->
+        <div class="panel-header" style="font-size:0.9rem; margin-top:10px;">
+            <span>🕹️ QUICK MOTION CONTROLS</span>
+        </div>
+
+        <div class="dpad-grid">
+            <div></div>
+            <button class="hud-btn" onclick="executeLocomotion('forward')">⬆️ FORWARD</button>
+            <div></div>
+            <button class="hud-btn" onclick="executeLocomotion('left')">⬅️ LEFT</button>
+            <button class="hud-btn accent" onclick="executeLocomotion('reset')">🎯 RESET</button>
+            <button class="hud-btn" onclick="executeLocomotion('right')">➡️ RIGHT</button>
+            <div></div>
+            <button class="hud-btn" onclick="executeLocomotion('backward')">⬇️ BACK</button>
+            <div></div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <button class="hud-btn accent" style="flex:1;" onclick="executeLocomotion('jump')">🦘 JUMP</button>
+            <button class="hud-btn accent" style="flex:1;" onclick="executeLocomotion('spin')">🔄 360 SPIN</button>
+        </div>
+
+        <!-- Text command manual fallback -->
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="manual-text-input" placeholder="Type prompt (e.g. 'tell me about galaxies', 'forward')..." 
+                style="flex:1; background:#05070a; border:1px solid rgba(0,243,255,0.3); color:#fff; padding:8px 12px; border-radius:6px; font-family:'Rajdhani'; outline:none;"
+                onkeydown="if(event.key === 'Enter') sendManualText();"
+            />
+            <button class="hud-btn" style="padding:8px 14px;" onclick="sendManualText()">Send</button>
+        </div>
+
+        <!-- Terminal Output -->
+        <div class="terminal-display" id="terminal-log">> HARRY AI Voice Digital Twin ready.
+> Microphone speech recognition engine initialized.
+> Say 'Forward', 'Backward', 'Left', 'Right', 'Jump', or 'Spin'.</div>
+    </div>
+
+    <!-- RIGHT 3D DIGITAL TWIN CANVAS -->
+    <div class="panel" style="padding:10px;">
+        <div id="canvas-wrap">
+            <div id="overlay-status">
+                ROBOT: <span id="robot-action-label" style="color:#4caf50; font-weight:bold;">IDLE</span> | 
+                POS: <span id="pos-label">X:0.0 Y:0.0 Z:0.0</span> | 
+                ROT: <span id="rot-label">180°</span>
+            </div>
+
+            <div id="camera-controls">
+                <button class="cam-btn active" id="btn-iso" onclick="setCameraPreset('iso')">Isometric</button>
+                <button class="cam-btn" id="btn-top" onclick="setCameraPreset('top')">Top</button>
+                <button class="cam-btn" id="btn-front" onclick="setCameraPreset('front')">Front</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ----------------------------------------------------
+    // 1. THREE.JS 3D SCENE & ROBOT MODEL SETUP
+    // ----------------------------------------------------
+    const container = document.getElementById('canvas-wrap');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06080b);
+    scene.fog = new THREE.FogExp2(0x06080b, 0.03);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(5.5, 5.0, 6.0);
+
+    const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true }});
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.8, 0);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0x00f3ff, 1.3);
+    dirLight.position.set(6, 12, 6);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    const pinkLight = new THREE.DirectionalLight(0xff0066, 0.8);
+    pinkLight.position.set(-6, 8, -6);
+    scene.add(pinkLight);
+
+    // Cyber Grid Floor
+    const gridHelper = new THREE.GridHelper(30, 30, 0x00f3ff, 0x16202c);
+    gridHelper.position.y = 0;
+    scene.add(gridHelper);
+
+    // Glowing Cybernetic Platform
+    const platGeo = new THREE.CylinderGeometry(3.6, 3.8, 0.1, 32);
+    const platMat = new THREE.MeshStandardMaterial({{ color: 0x0c1117, roughness: 0.2, metalness: 0.8 }});
+    const platform = new THREE.Mesh(platGeo, platMat);
+    platform.position.y = -0.05;
+    platform.receiveShadow = true;
+    scene.add(platform);
+
+    const ringGeo = new THREE.RingGeometry(3.65, 3.8, 32);
+    const ringMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff, side: THREE.DoubleSide }});
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.01;
+    scene.add(ring);
+
+    // Robot 3D Mesh Construction
+    const robotGroup = new THREE.Group();
+
+    const chassisGeo = new THREE.CylinderGeometry(0.65, 0.75, 0.35, 16);
+    const darkMetal = new THREE.MeshStandardMaterial({{ color: 0x182028, metalness: 0.85, roughness: 0.25 }});
+    const chassis = new THREE.Mesh(chassisGeo, darkMetal);
+    chassis.position.y = 0.35;
+    chassis.castShadow = true;
+    robotGroup.add(chassis);
+
+    const torsoGeo = new THREE.BoxGeometry(0.85, 0.95, 0.55);
+    const armorMat = new THREE.MeshStandardMaterial({{ color: 0x222e3b, metalness: 0.8, roughness: 0.3 }});
+    const torso = new THREE.Mesh(torsoGeo, armorMat);
+    torso.position.y = 1.0;
+    torso.castShadow = true;
+    robotGroup.add(torso);
+
+    // Arc Core
+    const arcGeo = new THREE.SphereGeometry(0.16, 16, 16);
+    const arcMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff }});
+    const arc = new THREE.Mesh(arcGeo, arcMat);
+    arc.position.set(0, 1.0, 0.29);
+    robotGroup.add(arc);
+
+    // Head
+    const headGeo = new THREE.BoxGeometry(0.55, 0.5, 0.5);
+    const head = new THREE.Mesh(headGeo, darkMetal);
+    head.position.y = 1.75;
+    head.castShadow = true;
+    robotGroup.add(head);
+
+    // Glowing Cyan Visor
+    const visorGeo = new THREE.BoxGeometry(0.45, 0.14, 0.12);
+    const visorMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff }});
+    const visor = new THREE.Mesh(visorGeo, visorMat);
+    visor.position.set(0, 1.75, 0.26);
+    robotGroup.add(visor);
+
+    // Arms
+    const armGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.75, 8);
+    const leftArm = new THREE.Mesh(armGeo, darkMetal);
+    leftArm.position.set(-0.6, 0.95, 0);
+    leftArm.castShadow = true;
+    robotGroup.add(leftArm);
+
+    const rightArm = new THREE.Mesh(armGeo, darkMetal);
+    rightArm.position.set(0.6, 0.95, 0);
+    rightArm.castShadow = true;
+    robotGroup.add(rightArm);
+
+    scene.add(robotGroup);
+
+    // Robot Motion Kinematics State
+    const targetPos = new THREE.Vector3(0, 0, 0);
+    let targetRot = Math.PI;
+    let jumpY = 0;
+    let currentAction = 'idle';
+
+    // Camera presets
+    function setCameraPreset(preset) {{
+        document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+        if (preset === 'top') {{
+            document.getElementById('btn-top').classList.add('active');
+            camera.position.set(0, 11, 0.01);
+        }} else if (preset === 'front') {{
+            document.getElementById('btn-front').classList.add('active');
+            camera.position.set(0, 2.2, 7.0);
+        }} else {{
+            document.getElementById('btn-iso').classList.add('active');
+            camera.position.set(5.5, 5.0, 6.0);
+        }}
+    }}
+
+    // ----------------------------------------------------
+    // 2. KINETIC LOCOMOTION & AI EXECUTION ENGINE
+    // ----------------------------------------------------
+    function executeLocomotion(actionName) {{
+        const step = 2.0;
+        const angleStep = Math.PI / 2;
+        currentAction = actionName;
+
+        document.getElementById('robot-action-label').innerText = actionName.toUpperCase();
+
+        if (actionName === 'forward') {{
+            targetPos.z -= step;
+            speakRobotVoice("Moving forward");
+            appendLog(`[ACTION] Locomotion: FORWARD`);
+        }} else if (actionName === 'backward') {{
+            targetPos.z += step;
+            speakRobotVoice("Moving backward");
+            appendLog(`[ACTION] Locomotion: BACKWARD`);
+        }} else if (actionName === 'left') {{
+            targetRot += angleStep;
+            speakRobotVoice("Turning left");
+            appendLog(`[ACTION] Locomotion: TURN LEFT`);
+        }} else if (actionName === 'right') {{
+            targetRot -= angleStep;
+            speakRobotVoice("Turning right");
+            appendLog(`[ACTION] Locomotion: TURN RIGHT`);
+        }} else if (actionName === 'jump') {{
+            jumpY = 1.8;
+            speakRobotVoice("Jumping");
+            appendLog(`[ACTION] Locomotion: JUMP`);
+            setTimeout(() => {{ jumpY = 0; }}, 600);
+        }} else if (actionName === 'spin') {{
+            targetRot += Math.PI * 2;
+            speakRobotVoice("Spinning");
+            appendLog(`[ACTION] Locomotion: 360 SPIN`);
+        }} else if (actionName === 'reset') {{
+            targetPos.set(0, 0, 0);
+            targetRot = Math.PI;
+            jumpY = 0;
+            speakRobotVoice("Resetting to origin");
+            appendLog(`[ACTION] Locomotion: RESET ORIGIN`);
+        }}
+    }}
+
+    function appendLog(msg) {{
+        const term = document.getElementById('terminal-log');
+        term.innerText += '\\n> ' + msg;
+        term.scrollTop = term.scrollHeight;
+    }}
+
+    // ----------------------------------------------------
+    // 3. TEXT-TO-SPEECH (TTS) ROBOT VOICE SYNTHESIZER
+    // ----------------------------------------------------
+    function speakRobotVoice(text) {{
+        const enabled = document.getElementById('tts-toggle').checked;
+        if (!enabled || !('speechSynthesis' in window)) return;
+        try {{
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.05;
+            utterance.pitch = 1.15; // Robotic tone
+            window.speechSynthesis.speak(utterance);
+        }} catch (e) {{
+            console.warn("TTS Error:", e);
+        }}
+    }}
+
+    // ----------------------------------------------------
+    // 4. REAL-TIME SPEECH RECOGNITION (WEB SPEECH API)
+    // ----------------------------------------------------
+    let recognition = null;
+    let isListening = false;
+    let continuousMode = false;
+
+    function initSpeechRecognition() {{
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {{
+            appendLog("Speech recognition not supported in this browser. Please use Chrome/Edge.");
+            return null;
+        }}
+
+        const rec = new SpeechRec();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = 'en-US';
+
+        rec.onstart = () => {{
+            isListening = true;
+            updateVoiceButtonUI(true);
+            setAudioWaveActive(true);
+        }};
+
+        rec.onresult = (event) => {{
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {{
+                if (event.results[i].isFinal) {{
+                    finalTranscript += event.results[i][0].transcript;
+                }} else {{
+                    interimTranscript += event.results[i][0].transcript;
+                }}
+            }}
+
+            const heard = (finalTranscript || interimTranscript).trim();
+            if (heard) {{
+                document.getElementById('live-speech').innerText = `"${{heard}}"`;
+            }}
+
+            if (finalTranscript) {{
+                processVoiceCommand(finalTranscript.trim());
+            }}
+        }};
+
+        rec.onerror = (event) => {{
+            console.warn("Speech recognition error:", event.error);
+            if (event.error === 'not-allowed') {{
+                alert("Microphone access denied. Please click allow in browser address bar.");
+            }}
+        }};
+
+        rec.onend = () => {{
+            isListening = false;
+            setAudioWaveActive(false);
+            if (continuousMode) {{
+                // Auto-restart for hands-free continuous voice control
+                try {{ rec.start(); }} catch(e) {{}}
             }} else {{
-                camera.position.set(5.5, 5.5, 5.5);
+                updateVoiceButtonUI(false);
             }}
+        }};
 
-            const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true }});
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            container.appendChild(renderer.domElement);
+        return rec;
+    }}
 
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.target.set(0, 0.8, 0);
+    function toggleVoiceListening() {{
+        if (!recognition) {{
+            recognition = initSpeechRecognition();
+        }}
+        if (!recognition) return;
 
-            // 2. Cyberpunk Lighting & Grid
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0x00f3ff, 1.2);
-            dirLight.position.set(5, 10, 5);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
-
-            const secondaryLight = new THREE.DirectionalLight(0xff0077, 0.8);
-            secondaryLight.position.set(-5, 8, -5);
-            scene.add(secondaryLight);
-
-            // Sci-fi Grid Floor
-            const gridHelper = new THREE.GridHelper(30, 30, 0x00f3ff, 0x222222);
-            gridHelper.position.y = 0;
-            scene.add(gridHelper);
-
-            // Circular Cyber Platform
-            const platformGeo = new THREE.CylinderGeometry(3.5, 3.7, 0.1, 32);
-            const platformMat = new THREE.MeshStandardMaterial({{
-                color: 0x111111,
-                roughness: 0.2,
-                metalness: 0.8
-            }});
-            const platform = new THREE.Mesh(platformGeo, platformMat);
-            platform.position.y = -0.05;
-            platform.receiveShadow = true;
-            scene.add(platform);
-
-            // Glowing ring around platform
-            const ringGeo = new THREE.RingGeometry(3.6, 3.75, 32);
-            const ringMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff, side: THREE.DoubleSide }});
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = -Math.PI / 2;
-            ring.position.y = 0.01;
-            scene.add(ring);
-
-            // 3. Robot Digital Twin Model Creation (Procedural Futuristic Robot Avatar)
-            const robotGroup = new THREE.Group();
-            
-            // Robot Base / Chassis
-            const baseGeo = new THREE.CylinderGeometry(0.6, 0.7, 0.3, 16);
-            const bodyMat = new THREE.MeshStandardMaterial({{ color: 0x1c232b, metalness: 0.9, roughness: 0.2 }});
-            const base = new THREE.Mesh(baseGeo, bodyMat);
-            base.position.y = 0.3;
-            base.castShadow = true;
-            robotGroup.add(base);
-
-            // Torso
-            const torsoGeo = new THREE.BoxGeometry(0.8, 0.9, 0.5);
-            const torsoMat = new THREE.MeshStandardMaterial({{ color: 0x242d38, metalness: 0.8, roughness: 0.3 }});
-            const torso = new THREE.Mesh(torsoGeo, torsoMat);
-            torso.position.y = 0.9;
-            torso.castShadow = true;
-            robotGroup.add(torso);
-
-            // Cyber Core Glow
-            const coreGeo = new THREE.SphereGeometry(0.15, 16, 16);
-            const coreMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff }});
-            const core = new THREE.Mesh(coreGeo, coreMat);
-            core.position.set(0, 0.9, 0.26);
-            robotGroup.add(core);
-
-            // Robot Head
-            const headGeo = new THREE.BoxGeometry(0.5, 0.45, 0.45);
-            const head = new THREE.Mesh(headGeo, bodyMat);
-            head.position.y = 1.6;
-            head.castShadow = true;
-            robotGroup.add(head);
-
-            // Glowing Visor
-            const visorGeo = new THREE.BoxGeometry(0.4, 0.12, 0.1);
-            const visorMat = new THREE.MeshBasicMaterial({{ color: 0x00f3ff }});
-            const visor = new THREE.Mesh(visorGeo, visorMat);
-            visor.position.set(0, 1.6, 0.24);
-            robotGroup.add(visor);
-
-            // Arms
-            const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8);
-            const leftArm = new THREE.Mesh(armGeo, bodyMat);
-            leftArm.position.set(-0.55, 0.85, 0);
-            leftArm.castShadow = true;
-            robotGroup.add(leftArm);
-
-            const rightArm = new THREE.Mesh(armGeo, bodyMat);
-            rightArm.position.set(0.55, 0.85, 0);
-            rightArm.castShadow = true;
-            robotGroup.add(rightArm);
-
-            scene.add(robotGroup);
-
-            // 4. Locomotion Kinematics State
-            const targetPos = new THREE.Vector3(0, 0, 0);
-            let targetRot = Math.PI;
-            let jumpHeight = 0;
-            const action = "{st.session_state.last_action}".toLowerCase();
-            const step = 2.0;
-            const angleStep = Math.PI / 2;
-
-            if (action.includes('forward') || action.includes('front')) {{
-                targetPos.z -= step;
-            }} else if (action.includes('backward') || action.includes('back')) {{
-                targetPos.z += step;
-            }} else if (action.includes('left')) {{
-                targetRot += angleStep;
-            }} else if (action.includes('right')) {{
-                targetRot -= angleStep;
-            }} else if (action.includes('jump')) {{
-                jumpHeight = 1.8;
-                setTimeout(() => {{ jumpHeight = 0; }}, 600);
-            }} else if (action.includes('spin')) {{
-                targetRot += Math.PI * 2;
-            }} else if (action.includes('reset')) {{
-                targetPos.set(0, 0, 0);
-                targetRot = Math.PI;
-                jumpHeight = 0;
-            }}
-
-            // 5. Speech Synthesis & Recognition in Browser
-            const ttsMessage = "{st.session_state.tts_text}";
-            if (ttsMessage && 'speechSynthesis' in window) {{
-                try {{
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(ttsMessage);
-                    utterance.rate = 1.05;
-                    utterance.pitch = 1.1;
-                    window.speechSynthesis.speak(utterance);
-                }} catch (e) {{}}
-            }}
-
-            function startSpeechRecognition() {{
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {{
-                    alert("Speech recognition is not supported in this browser. Please use Chrome/Edge.");
-                    return;
-                }}
-                const recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                const micBtn = document.getElementById('mic-btn');
-                micBtn.innerText = "🔴 Listening...";
-
-                recognition.onresult = (event) => {{
-                    const transcript = event.results[0][0].transcript;
-                    micBtn.innerText = "Heard: " + transcript;
-                    alert("Speech Recognized: '" + transcript + "'\\nEnter this command in the left panel!");
-                }};
-
-                recognition.onerror = () => {{
-                    micBtn.innerText = "🎤 In-Browser Speech Recognition";
-                }};
-
-                recognition.onend = () => {{
-                    micBtn.innerText = "🎤 In-Browser Speech Recognition";
-                }};
-
+        if (isListening) {{
+            continuousMode = false;
+            document.getElementById('continuous-toggle').checked = false;
+            recognition.stop();
+        }} else {{
+            try {{
                 recognition.start();
+            }} catch (e) {{
+                console.warn(e);
             }}
+        }}
+    }}
 
-            // 6. Animation Render Loop
-            let clock = new THREE.Clock();
-            function animate() {{
-                requestAnimationFrame(animate);
-                const delta = clock.getDelta();
-                const time = clock.getElapsedTime();
+    function toggleContinuousMode(enabled) {{
+        continuousMode = enabled;
+        if (enabled && !isListening) {{
+            toggleVoiceListening();
+        }}
+    }}
 
-                // Smooth Position & Rotation Interpolation (Lerp)
-                robotGroup.position.x = THREE.MathUtils.lerp(robotGroup.position.x, targetPos.x, 0.08);
-                robotGroup.position.z = THREE.MathUtils.lerp(robotGroup.position.z, targetPos.z, 0.08);
-                robotGroup.position.y = THREE.MathUtils.lerp(robotGroup.position.y, jumpHeight, 0.15);
-                robotGroup.rotation.y = THREE.MathUtils.lerp(robotGroup.rotation.y, targetRot, 0.12);
+    function updateVoiceButtonUI(listening) {{
+        const btn = document.getElementById('voice-btn');
+        const label = document.getElementById('voice-label');
+        const icon = document.getElementById('voice-icon');
 
-                // Subtle idle hovering pulsation
-                if (jumpHeight === 0) {{
-                    torso.position.y = 0.9 + Math.sin(time * 3) * 0.03;
-                    head.position.y = 1.6 + Math.sin(time * 3) * 0.03;
-                }}
+        if (listening) {{
+            btn.classList.add('listening');
+            label.innerText = "🔴 LISTENING... SPEAK NOW!";
+            icon.innerText = "🎙️";
+        }} else {{
+            btn.classList.remove('listening');
+            label.innerText = "CLICK TO TALK (VOICE CONTROL)";
+            icon.innerText = "🎤";
+        }}
+    }}
 
-                controls.update();
-                renderer.render(scene, camera);
+    function setAudioWaveActive(active) {{
+        document.querySelectorAll('.audio-bar').forEach(bar => {{
+            if (active) bar.classList.add('active');
+            else bar.classList.remove('active');
+        }});
+    }}
+
+    // ----------------------------------------------------
+    // 5. INTENT PARSING & COMMAND DISPATCHER
+    // ----------------------------------------------------
+    const API_KEY = "{api_key}";
+
+    function parseRuleBasedLocomotion(text) {{
+        const lower = text.toLowerCase();
+        if (lower.includes('forward') || lower.includes('front') || lower.includes('ahead') || lower.includes('straight')) return 'forward';
+        if (lower.includes('backward') || lower.includes('back') || lower.includes('reverse')) return 'backward';
+        if (lower.includes('left')) return 'left';
+        if (lower.includes('right')) return 'right';
+        if (lower.includes('jump') || lower.includes('hop')) return 'jump';
+        if (lower.includes('spin') || lower.includes('dance') || lower.includes('rotate')) return 'spin';
+        if (lower.includes('reset') || lower.includes('center') || lower.includes('stop')) return 'reset';
+        return null;
+    }}
+
+    async function processVoiceCommand(spokenText) {{
+        appendLog(`Heard Voice: "${{spokenText}}"`);
+
+        // 1. Instant rule-based check for zero latency locomotion
+        const matchedAction = parseRuleBasedLocomotion(spokenText);
+        if (matchedAction) {{
+            executeLocomotion(matchedAction);
+            return;
+        }}
+
+        // 2. Gemini AI query if conversational or complex
+        if (API_KEY) {{
+            appendLog(`Querying Gemini AI brain...`);
+            try {{
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{API_KEY}}`;
+                const payload = {{
+                    contents: [{{
+                        parts: [{{
+                            text: `You are Harry, a friendly voice-controlled 3D robot companion. The user spoke: "${{spokenText}}". Respond in 1-2 concise, witty sentences suitable for spoken robot dialogue.`
+                        }}]
+                    }}]
+                }};
+
+                const res = await fetch(url, {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }},
+                    body: JSON.stringify(payload)
+                }});
+
+                const data = await res.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I processed your command, operator.";
+                appendLog(`AI Response: "${{reply}}"`);
+                speakRobotVoice(reply);
+            }} catch (e) {{
+                const fallback = `I hear you, operator: "${{spokenText}}"`;
+                appendLog(fallback);
+                speakRobotVoice(fallback);
             }}
-            animate();
+        }} else {{
+            const fallback = `Understood: "${{spokenText}}". To enable full conversational answers, set your Gemini API key in the sidebar.`;
+            appendLog(fallback);
+            speakRobotVoice(fallback);
+        }}
+    }}
 
-            // Responsive Resizing
-            window.addEventListener('resize', () => {{
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            }});
-        </script>
-    </body>
-    </html>
-    """
-    components.html(threejs_html, height=550)
+    function sendManualText() {{
+        const inp = document.getElementById('manual-text-input');
+        const val = inp.value.trim();
+        if (!val) return;
+        document.getElementById('live-speech').innerText = `"${{val}}"`;
+        processVoiceCommand(val);
+        inp.value = '';
+    }}
+
+    // ----------------------------------------------------
+    // 6. ANIMATION & RENDER LOOP
+    // ----------------------------------------------------
+    let clock = new THREE.Clock();
+
+    function animate() {{
+        requestAnimationFrame(animate);
+        const time = clock.getElapsedTime();
+
+        // Smooth Lerp Position & Rotation
+        robotGroup.position.x = THREE.MathUtils.lerp(robotGroup.position.x, targetPos.x, 0.08);
+        robotGroup.position.z = THREE.MathUtils.lerp(robotGroup.position.z, targetPos.z, 0.08);
+        robotGroup.position.y = THREE.MathUtils.lerp(robotGroup.position.y, jumpY, 0.15);
+        robotGroup.rotation.y = THREE.MathUtils.lerp(robotGroup.rotation.y, targetRot, 0.12);
+
+        // Idle hovering float
+        if (jumpY === 0) {{
+            torso.position.y = 1.0 + Math.sin(time * 3) * 0.03;
+            head.position.y = 1.75 + Math.sin(time * 3) * 0.03;
+        }}
+
+        // Update telemetry HUD
+        document.getElementById('pos-label').innerText = 
+            `X:${{robotGroup.position.x.toFixed(1)}} Y:${{robotGroup.position.y.toFixed(1)}} Z:${{robotGroup.position.z.toFixed(1)}}`;
+        const deg = Math.round((robotGroup.rotation.y * 180 / Math.PI) % 360);
+        document.getElementById('rot-label').innerText = `${{deg < 0 ? deg + 360 : deg}}°`;
+
+        controls.update();
+        renderer.render(scene, camera);
+    }}
+    animate();
+
+    window.addEventListener('resize', () => {{
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }});
+</script>
+
+</body>
+</html>
+"""
+
+components.html(robot_console_html, height=750, scrolling=False)
