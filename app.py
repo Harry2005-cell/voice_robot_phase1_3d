@@ -317,28 +317,43 @@ with col_left:
         st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
         st.markdown("<h3 style='color:#00f3ff; font-size:1.1rem; margin-top:0;'>Command Interface</h3>", unsafe_allow_html=True)
         
-        # Audio File or Voice Input
-        audio_file = st.file_uploader("Upload / Record Audio (.wav)", type=["wav", "mp3", "ogg"], key="cmd_audio")
+        # Live Microphone Input (Streamlit native) or Optional File Upload
+        input_mode = st.radio(
+            "Audio Input Method:",
+            ["🎙️ Live Microphone", "📁 Upload Audio File (Optional)"],
+            horizontal=True,
+            key="input_mode_radio"
+        )
+        
+        audio_data = None
+        if input_mode == "🎙️ Live Microphone":
+            # Streamlit native live microphone recorder (st.audio_input)
+            if hasattr(st, "audio_input"):
+                audio_data = st.audio_input("Record Voice Command", key="cmd_live_mic")
+            else:
+                st.info("💡 Click the 'In-Browser Speech Recognition' button on the 3D scene below or type a command directly.")
+        else:
+            audio_data = st.file_uploader("Upload Audio File (.wav, .mp3)", type=["wav", "mp3", "ogg"], key="cmd_audio_upload")
         
         # Text prompt input
         text_prompt = st.text_input(
-            "Natural Language Speech / Command Prompt",
+            "💬 Natural Language Speech / Command Prompt",
             placeholder="e.g. 'move forward', 'turn left', 'jump', 'tell me about black holes'",
             key="cmd_text"
         )
         
         if st.button("🚀 Process Voice / Command", use_container_width=True, key="btn_process"):
-            if not text_prompt and not audio_file:
-                st.warning("Please provide either an audio file or a text command.")
+            if not text_prompt and not audio_data:
+                st.warning("Please record your voice, enter a command, or click quick locomotion buttons.")
             else:
                 speaker_id = "User"
                 match_val = 100
 
-                # 1. Biometric speaker identification if audio is uploaded
-                if audio_file:
+                # 1. Biometric speaker identification if audio is present
+                if audio_data:
                     temp_audio_path = os.path.join(CURRENT_DIR, "temp_command.wav")
                     with open(temp_audio_path, "wb") as f:
-                        f.write(audio_file.getbuffer())
+                        f.write(audio_data.getvalue() if hasattr(audio_data, "getvalue") else audio_data.getbuffer())
                     
                     speaker_id, match_val = identify_speaker(temp_audio_path)
                     try:
@@ -368,6 +383,7 @@ with col_left:
                 
                 st.rerun()
 
+
         st.markdown("</div>", unsafe_allow_html=True)
         
         # Real-time Terminal Output
@@ -380,15 +396,30 @@ with col_left:
         st.write("Enroll your voiceprint into the SpeechBrain neural biometric database for instant identity verification.")
         
         enroll_name = st.text_input("Operator Name", placeholder="e.g. Harshal", key="enroll_name")
-        enroll_audio = st.file_uploader("Upload Voice Sample (.wav)", type=["wav"], key="enroll_audio")
+        
+        enroll_mode = st.radio(
+            "Enrollment Sample Source:",
+            ["🎙️ Record Voice Sample via Mic", "📁 Upload .wav File"],
+            horizontal=True,
+            key="enroll_mode_radio"
+        )
+        
+        enroll_audio_data = None
+        if enroll_mode == "🎙️ Record Voice Sample via Mic":
+            if hasattr(st, "audio_input"):
+                enroll_audio_data = st.audio_input("Speak for 3-5 seconds to enroll voice", key="enroll_live_mic")
+            else:
+                st.info("💡 Record a sample using your microphone or switch to upload.")
+        else:
+            enroll_audio_data = st.file_uploader("Upload Voice Sample (.wav)", type=["wav"], key="enroll_audio_file")
         
         if st.button("💾 Enroll Voiceprint", use_container_width=True, key="btn_enroll"):
-            if not enroll_name or not enroll_audio:
-                st.warning("Please provide both an operator name and an audio file.")
+            if not enroll_name or not enroll_audio_data:
+                st.warning("Please provide both an operator name and record/upload a voice sample.")
             else:
                 temp_enroll_path = os.path.join(CURRENT_DIR, f"temp_enroll_{enroll_name}.wav")
                 with open(temp_enroll_path, "wb") as f:
-                    f.write(enroll_audio.getbuffer())
+                    f.write(enroll_audio_data.getvalue() if hasattr(enroll_audio_data, "getvalue") else enroll_audio_data.getbuffer())
                 
                 success = enroll_speaker(enroll_name, temp_enroll_path)
                 try:
@@ -407,6 +438,7 @@ with col_left:
                     st.error("Failed to enroll voiceprint. Please ensure valid audio data.")
 
         st.markdown("</div>", unsafe_allow_html=True)
+
 
     with tab_raw:
         st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
