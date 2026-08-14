@@ -16,23 +16,46 @@ try:
 except Exception:
     pass
 
-classifier = EncoderClassifier.from_hparams(
-    source="speechbrain/spkrec-ecapa-voxceleb", 
-    savedir="pretrained_models/spkrec-ecapa-voxceleb"
-)
+_classifier = None
 
-PROFILE_DIR = "app/biometrics/profiles/"
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROFILE_DIR = os.path.join(CURRENT_DIR, "profiles")
 os.makedirs(PROFILE_DIR, exist_ok=True)
 SIMILARITY_THRESHOLD = 0.75
 
+def get_classifier():
+    global _classifier
+    if _classifier is None:
+        model_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "pretrained_models",
+            "spkrec-ecapa-voxceleb"
+        )
+        os.makedirs(model_dir, exist_ok=True)
+        try:
+            _classifier = EncoderClassifier.from_hparams(
+                source="speechbrain/spkrec-ecapa-voxceleb", 
+                savedir=model_dir
+            )
+        except Exception as e:
+            print(f"Warning: Could not load SpeechBrain classifier: {e}")
+            return None
+    return _classifier
+
 def extract_embedding(audio_path):
+    clf = get_classifier()
+    if clf is None:
+        return None
     signal, fs = torchaudio.load(audio_path)
-    embeddings = classifier.encode_batch(signal)
-    return embeddings.squeeze().numpy()
+    embeddings = clf.encode_batch(signal)
+    return embeddings.squeeze().detach().cpu().numpy()
 
 def enroll_speaker(name: str, audio_path: str):
     try:
         embedding = extract_embedding(audio_path)
+        if embedding is None:
+            return False
+        os.makedirs(PROFILE_DIR, exist_ok=True)
         np.save(os.path.join(PROFILE_DIR, f"{name}.npy"), embedding)
         return True
     except Exception as e:
@@ -44,6 +67,8 @@ def identify_speaker(audio_path: str):
         if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 1000:
             return "User", 100
         unknown_embedding = extract_embedding(audio_path)
+        if unknown_embedding is None:
+            return "User", 100
     except Exception as e:
         return "Unknown", 0
 
@@ -64,4 +89,4 @@ def identify_speaker(audio_path: str):
                     best_match = file.replace(".npy", "")
                 
     score_percent = min(100, max(0, int(highest_score * 100)))
-    return best_match, score_percent
+    return best_match, score_percent

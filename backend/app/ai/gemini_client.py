@@ -3,22 +3,47 @@ import json
 import re
 import os
 
-api_key = os.getenv("GEMINI_API_KEY", "")
+def get_api_key():
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if api_key:
+        return api_key
+    
+    # Try Streamlit secrets if running inside Streamlit
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            return st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
 
-# Load from local .env if not found in environment variables
-if not api_key:
-    env_path = os.path.join(os.path.dirname(__file__), "../../.env")
-    if os.path.exists(env_path):
-        with open(env_path, "r") as f:
-            for line in f:
-                if line.startswith("GEMINI_API_KEY="):
-                    api_key = line.split("=", 1)[1].strip()
-                    break
+    # Check local .env files
+    possible_env_paths = [
+        os.path.join(os.path.dirname(__file__), "../../.env"),
+        os.path.join(os.path.dirname(__file__), "../../../.env"),
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.getcwd(), "backend/.env"),
+    ]
+    for env_path in possible_env_paths:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.strip().startswith("GEMINI_API_KEY="):
+                            key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            if key:
+                                return key
+            except Exception:
+                pass
+    return ""
 
-if api_key:
-    genai.configure(api_key=api_key)
+CANDIDATE_MODELS = [
+    "models/gemini-2.5-flash",
+    "models/gemini-2.0-flash",
+    "models/gemini-flash-latest",
+    "models/gemini-pro-latest",
+    "models/gemini-2.0-flash-lite"
+]
 
-CANDIDATE_MODELS = ["models/gemini-flash-latest", "models/gemini-2.0-flash", "models/gemini-pro-latest", "models/gemini-2.0-flash-lite"]
 
 def parse_rule_based_intent(text: str):
     """Fast & reliable local keyword matching for locomotion commands."""
@@ -73,14 +98,21 @@ def clean_extract_json(text_str: str):
 
     return None
 
-def get_intent(transcribed_text: str, speaker_name: str):
+def get_intent(transcribed_text: str, speaker_name: str = "User"):
     # 1. Rule-based fast path for locomotion commands
     rule_intent = parse_rule_based_intent(transcribed_text)
     if rule_intent:
         print(f"[INTENT PARSER] Rule matched: {rule_intent} from '{transcribed_text}'")
         return rule_intent
 
-    # 2. AI Gemini / Gemma models for conversation or general questions (e.g. "who is president?", "tell me about gravity")
+    # 2. AI Gemini models for conversation or general questions
+    key = get_api_key()
+    if key:
+        try:
+            genai.configure(api_key=key)
+        except Exception as e:
+            print(f"GenAI configure error: {e}")
+
     prompt = f"""
     You are the brain of a 3D virtual robot. 
     The current speaker identified by biometrics is: {speaker_name}.
@@ -90,11 +122,12 @@ def get_intent(transcribed_text: str, speaker_name: str):
     Return ONLY a raw JSON object matching one of these schemas:
     
     If locomotion:
-    {{"type": "locomotion", "action": "forward"}} (or backward, left, right)
+    {{"type": "locomotion", "action": "forward"}} (or backward, left, right, jump, spin, reset)
     
     If conversation:
     {{"type": "conversation", "response": "Your textual answer here."}}
     """
+
     
     for model_name in CANDIDATE_MODELS:
         try:
