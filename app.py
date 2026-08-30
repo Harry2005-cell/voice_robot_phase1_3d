@@ -14,11 +14,31 @@ if BACKEND_DIR not in sys.path:
 
 try:
     from app.ai.gemini_client import get_intent, parse_rule_based_intent, get_api_key
-    from app.biometrics.speechbrain_model import identify_speaker, enroll_speaker
 except ImportError:
     sys.path.append(os.path.join(BACKEND_DIR, "app"))
     from ai.gemini_client import get_intent, parse_rule_based_intent, get_api_key
-    from biometrics.speechbrain_model import identify_speaker, enroll_speaker
+
+def enroll_speaker(name: str, audio_path: str):
+    try:
+        try:
+            from app.biometrics.speechbrain_model import enroll_speaker as _enroll
+        except ImportError:
+            from biometrics.speechbrain_model import enroll_speaker as _enroll
+        return _enroll(name, audio_path)
+    except Exception as e:
+        print(f"Biometric enrollment unavailable: {e}")
+        return False
+
+def identify_speaker(audio_path: str):
+    try:
+        try:
+            from app.biometrics.speechbrain_model import identify_speaker as _identify
+        except ImportError:
+            from biometrics.speechbrain_model import identify_speaker as _identify
+        return _identify(audio_path)
+    except Exception as e:
+        print(f"Biometric identification unavailable: {e}")
+        return "User", 100
 
 # Streamlit Page Config
 st.set_page_config(

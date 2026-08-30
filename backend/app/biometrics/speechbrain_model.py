@@ -11,12 +11,6 @@ import numpy as np
 from scipy.spatial.distance import cosine
 
 try:
-    from speechbrain.pretrained import EncoderClassifier
-except Exception as e:
-    EncoderClassifier = None
-    print(f"Warning: Could not import SpeechBrain EncoderClassifier: {e}")
-
-try:
     torchaudio.set_audio_backend("soundfile")
 except Exception:
     pass
@@ -30,16 +24,15 @@ SIMILARITY_THRESHOLD = 0.75
 
 def get_classifier():
     global _classifier
-    if EncoderClassifier is None:
-        return None
     if _classifier is None:
-        model_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            "pretrained_models",
-            "spkrec-ecapa-voxceleb"
-        )
-        os.makedirs(model_dir, exist_ok=True)
         try:
+            from speechbrain.pretrained import EncoderClassifier
+            model_dir = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                "pretrained_models",
+                "spkrec-ecapa-voxceleb"
+            )
+            os.makedirs(model_dir, exist_ok=True)
             _classifier = EncoderClassifier.from_hparams(
                 source="speechbrain/spkrec-ecapa-voxceleb", 
                 savedir=model_dir
