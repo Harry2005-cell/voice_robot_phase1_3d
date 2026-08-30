@@ -2,6 +2,7 @@ fastapi>=0.104.1
 uvicorn>=0.24.0
 google-generativeai>=0.4.0
 speechbrain>=0.5.15
+numba>=0.57.0
 torch>=2.0.0
 torchaudio>=2.0.0
 numpy>=1.24.0

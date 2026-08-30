@@ -8,8 +8,13 @@ warnings.filterwarnings("ignore", module="speechbrain")
 import torch
 import torchaudio
 import numpy as np
-from speechbrain.pretrained import EncoderClassifier
 from scipy.spatial.distance import cosine
+
+try:
+    from speechbrain.pretrained import EncoderClassifier
+except Exception as e:
+    EncoderClassifier = None
+    print(f"Warning: Could not import SpeechBrain EncoderClassifier: {e}")
 
 try:
     torchaudio.set_audio_backend("soundfile")
@@ -25,6 +30,8 @@ SIMILARITY_THRESHOLD = 0.75
 
 def get_classifier():
     global _classifier
+    if EncoderClassifier is None:
+        return None
     if _classifier is None:
         model_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
