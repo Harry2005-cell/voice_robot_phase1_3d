@@ -896,44 +896,50 @@ robot_console_html = f"""
         // 2. Gemini AI query if conversational or complex
         if (API_KEY) {{
             appendLog(`Querying Gemini AI brain...`);
-            try {{
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{API_KEY}}`;
-                const payload = {{
-                    contents: [{{
-                        parts: [{{
-                            text: `You are Harry, a friendly voice-controlled 3D robot companion. The user spoke: "${{spokenText}}". Respond in 1-2 concise, witty sentences suitable for spoken robot dialogue.`
+            const candidateModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+            let success = false;
+            let lastErrorMessage = "";
+
+            for (const model of candidateModels) {{
+                try {{
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${{model}}:generateContent?key=${{API_KEY}}`;
+                    const payload = {{
+                        contents: [{{
+                            parts: [{{
+                                text: `You are Harry, a friendly voice-controlled 3D robot companion. The user spoke: "${{spokenText}}". Respond in 1-2 concise, witty sentences suitable for spoken robot dialogue.`
+                            }}]
                         }}]
-                    }}]
-                }};
+                    }};
 
-                const res = await fetch(url, {{
-                    method: 'POST',
-                    headers: {{ 'Content-Type': 'application/json' }},
-                    body: JSON.stringify(payload)
-                }});
+                    const res = await fetch(url, {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify(payload)
+                    }});
 
-                const data = await res.json();
-                
-                if (data.error) {{
-                    const errMsg = `Gemini API Error: ${{data.error.message || 'Unable to process query'}}`;
-                    appendLog(errMsg);
-                    speakRobotVoice("Sorry, I encountered an issue accessing my AI brain. Please check your Gemini API key.");
-                    return;
+                    const data = await res.json();
+                    
+                    if (data.error) {{
+                        lastErrorMessage = data.error.message || `${{model}} error`;
+                        continue;
+                    }}
+
+                    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (reply) {{
+                        appendLog(`AI Response: "${{reply}}"`);
+                        speakRobotVoice(reply);
+                        success = true;
+                        break;
+                    }}
+                }} catch (e) {{
+                    lastErrorMessage = e.message || "Network error";
                 }}
+            }}
 
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (reply) {{
-                    appendLog(`AI Response: "${{reply}}"`);
-                    speakRobotVoice(reply);
-                }} else {{
-                    const fallback = `I hear you, operator: "${{spokenText}}"`;
-                    appendLog(fallback);
-                    speakRobotVoice(fallback);
-                }}
-            }} catch (e) {{
-                const fallback = `I hear you, operator: "${{spokenText}}"`;
-                appendLog(fallback);
-                speakRobotVoice(fallback);
+            if (!success) {{
+                const errMsg = `Gemini API Error: ${{lastErrorMessage || 'Unable to process query'}}`;
+                appendLog(errMsg);
+                speakRobotVoice("Sorry, I encountered an issue accessing my AI brain. Please check your Gemini API key.");
             }}
         }} else {{
             const fallback = `Understood: "${{spokenText}}". To enable full conversational answers, set your Gemini API key in the sidebar.`;

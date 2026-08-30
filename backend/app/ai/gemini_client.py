@@ -38,9 +38,11 @@ def get_api_key():
     return ""
 
 CANDIDATE_MODELS = [
-    "models/gemini-2.5-flash",
+    "models/gemini-1.5-flash",
     "models/gemini-2.0-flash",
+    "models/gemini-2.5-flash",
     "models/gemini-flash-latest",
+    "models/gemini-1.5-flash-latest",
     "models/gemini-pro-latest",
     "models/gemini-2.0-flash-lite"
 ]
