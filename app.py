@@ -896,7 +896,7 @@ robot_console_html = f"""
         // 2. Gemini AI query if conversational or complex
         if (API_KEY) {{
             appendLog(`Querying Gemini AI brain...`);
-            const candidateModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+            const candidateModels = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
             let success = false;
             let lastErrorMessage = "";
 
