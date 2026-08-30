@@ -6,13 +6,14 @@ import os
 def get_api_key():
     api_key = os.getenv("GEMINI_API_KEY", "")
     if api_key:
-        return api_key
+        return api_key.strip().replace("\n", "").replace("\r", "")
     
     # Try Streamlit secrets if running inside Streamlit
     try:
         import streamlit as st
         if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-            return st.secrets["GEMINI_API_KEY"]
+            key_val = str(st.secrets["GEMINI_API_KEY"])
+            return key_val.strip().replace("\n", "").replace("\r", "")
     except Exception:
         pass
 
