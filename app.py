@@ -880,9 +880,23 @@ robot_console_html = f"""
                 }});
 
                 const data = await res.json();
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I processed your command, operator.";
-                appendLog(`AI Response: "${{reply}}"`);
-                speakRobotVoice(reply);
+                
+                if (data.error) {{
+                    const errMsg = `Gemini API Error: ${{data.error.message || 'Unable to process query'}}`;
+                    appendLog(errMsg);
+                    speakRobotVoice("Sorry, I encountered an issue accessing my AI brain. Please check your Gemini API key.");
+                    return;
+                }}
+
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (reply) {{
+                    appendLog(`AI Response: "${{reply}}"`);
+                    speakRobotVoice(reply);
+                }} else {{
+                    const fallback = `I hear you, operator: "${{spokenText}}"`;
+                    appendLog(fallback);
+                    speakRobotVoice(fallback);
+                }}
             }} catch (e) {{
                 const fallback = `I hear you, operator: "${{spokenText}}"`;
                 appendLog(fallback);
