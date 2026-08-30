@@ -1,132 +1,122 @@
-LIVE LINK 
-https://voicerobotphase13d-g8qqylsala6mx5hh6apx46.streamlit.app/
+# NEXUS — AI Voice-Controlled Robotic Assistant
 
-# 🤖 Harry AI: Voice-Controlled 3D Robot Digital Twin
+> **"Speak. Command. Watch Intelligence Move."**
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B)
-![React](https://img.shields.io/badge/React-18-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
-![Gemini](https://img.shields.io/badge/AI-Google_Gemini-orange)
-
-A full-stack, edge-to-cloud web application that allows users to control a 3D virtual robot using their voice. The system features biometric voice enrollment, real-time speech recognition, and uses Google's `gemini-2.5-flash` / `gemini-2.0-flash` AI to parse natural language into kinetic 3D commands.
+NEXUS is a futuristic, professional, interactive AI voice-controlled 3D robot assistant web application. Built with **React 18**, **TypeScript**, **Tailwind CSS**, **Three.js**, **React Three Fiber (R3F)**, **Web Speech API**, and **Web Audio API**.
 
 ---
 
-## ✨ Features
+## 🌟 Key Features
 
-* **Biometric Security:** Verifies speaker identity through audio voiceprint enrollment using SpeechBrain neural embeddings.
-* **Real-Time Speech Recognition:** Captures and transcribes audio directly in the browser using the Web Speech API and audio streaming.
-* **Smart Intent Parsing:** Leverages Google's Gemini AI to analyze natural language and determine whether a command is locomotion or conversational dialogue.
-* **3D Digital Twin:** Renders a responsive, animated 3D robot in the browser using Three.js and React-Three-Fiber.
-* **Multi-Network Ready:** Configured for open access across all local and remote network interfaces (`0.0.0.0:8501`).
-* **Sci-Fi UI:** A sleek, dark-mode futuristic dashboard to monitor the system's status and terminal outputs.
+1. **Futuristic Glassmorphic UI Dashboard**
+   - Modern dark theme inspired by Tesla robotics & professional AI dashboards.
+   - Micro-interactions, glowing status rings, responsive mobile/desktop layout.
 
----
+2. **Articulated 3D Humanoid Robot Simulation**
+   - High-precision 3D WebGL model built with Three.js / React Three Fiber.
+   - Articulated joints (Head, Visor, Torso Arc Reactor, Shoulders, Elbows, Hands, Hips, Knees, Feet).
+   - Raycast body part hover highlighting & interactive joint override selection.
+   - Orbit controls, zoom, pan, and smooth camera position presets (`Front`, `Side`, `Back`, `Top`, `Reset`).
 
-## 🛠️ Prerequisites
+3. **Natural Voice Control Pipeline**
+   - **User Voice → STT → Intent Extraction → Safety Check → Motion Kinematics → 3D Action → Response → TTS Audio**.
+   - Circular animated microphone button with real-time Web Audio API frequency waveform visualizer.
+   - Graceful fallback for microphone permissions, silence, or unsupported browsers via text input.
 
-Before you begin, ensure you have:
-* **[Python](https://www.python.org/)** (v3.9 or higher)
-* **[Node.js](https://nodejs.org/)** (v16 or higher, optional for React frontend)
-* A valid **Google Gemini API Key** (Get one from [Google AI Studio](https://aistudio.google.com/))
-* A working microphone
+4. **Dual-Mode AI Intent Engine**
+   - **Client-Side Semantic NLP**: Converts natural speech into validated JSON schemas (`MOVE`, `ROTATE`, `GESTURE`, `INTERACTION`, `SEQUENCE`).
+   - Supports complex composite commands (e.g., *"Move forward 2 steps, turn right 90 degrees, and wave"*).
+   - Optional **OpenAI API Integration**: Enable via `VITE_OPENAI_API_KEY` in `.env`.
 
----
+5. **Smooth Kinematic Motion Planner**
+   - Cubic easing interpolation (`easeInOutCubic`) for natural joint acceleration/deceleration without visual snapping.
+   - Multi-state Animation Controller (`IDLE`, `LISTENING`, `THINKING`, `WALKING`, `TURNING`, `WAVING`, `POINTING`, `NODDING`, `SPEAKING`, `SUCCESS`, `ERROR`, `STOPPED`).
 
-## 🚀 Quickstart: Streamlit Deployment (Open to All Networks)
+6. **Safety & Emergency Controls**
+   - Ambiguity validation modal for unclear instructions (e.g. *"Go over there"*).
+   - Prominent **STOP ROBOT** button & instant `ESC` key hotkey override.
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Harry2005-cell/voice_robot_phase1_3d.git
-cd voice_robot_phase1_3d
-```
-
-
-### 2. Install Dependencies
-```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-### 3. Configure Gemini API Key
-Create a `.env` file in the root directory:
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-### 4. Launch Streamlit (Accessible on Local & LAN Network)
-```bash
-streamlit run app.py
-```
-> The application will bind to `0.0.0.0:8501`, allowing any device on your Wi-Fi/LAN or public IP to access `http://<YOUR_IP>:8501`.
-
-### 5. Deploy to Streamlit Community Cloud
-1. Fork or push this repository to GitHub: `https://github.com/Harry2005-cell/voice_robot_phase1_3d`
-2. Go to [share.streamlit.io](https://share.streamlit.io/) and create a **New App**.
-3. Select your repository, branch `main`, and main file `app.py`.
-4. Under **Advanced settings > Secrets**, add:
-   ```toml
-   GEMINI_API_KEY = "your_gemini_api_key_here"
-   ```
-5. Click **Deploy**!
+7. **Autonomous Demo & Telemetry Analytics**
+   - Dedicated **AI ROBOT DEMO** presentation routine showcasing full capabilities.
+   - Real-time Telemetry Panel (Battery, Mode, Speed, X/Y/Z Coordinates, Heading Angle, Health).
+   - System Activity Monitor Terminal Log & Session Analytics modal.
 
 ---
 
-## 🔧 Alternative: FastAPI Backend + React Frontend
+## 🚀 Quick Start Guide
 
-### Backend Setup (FastAPI)
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+### Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
 
-### Frontend Setup (React + Vite)
+### Installation
+
+1. Install dependencies:
 ```bash
-cd frontend
 npm install
+```
+
+2. Run development server:
+```bash
 npm run dev
 ```
 
+3. Open your browser at `http://localhost:3000`.
+
 ---
 
-## 📂 Project Structure
-```text
-├── app.py                    # Streamlit Application (3D Three.js + Gemini + Biometrics)
-├── requirements.txt          # Python Dependencies for Streamlit Cloud & Hosting
-├── .streamlit/
-│   └── config.toml           # Network (0.0.0.0), CORS & Cyberpunk Theme Config
-├── backend/                  # Python FastAPI Backend
-│   ├── app/
-│   │   ├── main.py           # API routes & Gemini integration
-│   │   ├── ai/
-│   │   │   └── gemini_client.py # Gemini intent parser
-│   │   └── biometrics/
-│   │       └── speechbrain_model.py # SpeechBrain voice biometrics
-│   └── requirements.txt      # Backend Python dependencies
-│
-└── frontend/                 # React + Three.js Frontend
-    ├── public/
-    │   └── robot.glb         # 3D Model Asset
-    ├── src/
-    │   ├── App.jsx           # React UI Dashboard
-    │   ├── utils/
-    │   │   └── audioStreamer.js # Audio recording utility
-    │   └── three/
-    │       └── Scene.jsx     # Three.js 3D Canvas
-    └── package.json          # Node dependencies
+## ⚙️ Environment Configuration (.env)
+
+NEXUS includes a built-in zero-latency NLP intent engine that works 100% offline out-of-the-box. To optionally connect an OpenAI API key:
+
+1. Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+2. Set your API key:
+```env
+VITE_OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 ---
 
-## 📜 License
-MIT License. Created for Harry AI Voice Robot Digital Twin.
+## 🗣️ Supported Commands
 
- 
- you can access by public url if needed # https://voicerobotphase13d-g8qqylsala6mx5hh6apx46.streamlit.app/
+- **Movement**:
+  - *"Move forward two steps"*
+  - *"Step backward"*
+  - *"Move 3 steps to the left"*
+- **Rotation**:
+  - *"Turn left"*
+  - *"Turn right 90 degrees"*
+  - *"Turn around"*
+- **Gestures**:
+  - *"Wave your right hand"*
+  - *"Raise both hands"*
+  - *"Dance routine"*
+  - *"Bow polite"*
+- **Interaction**:
+  - *"Say hello"*
+  - *"Introduce yourself"*
+  - *"What is your status?"*
+  - *"Start demonstration"*
+  - *"Stop robot"*
+- **Composite Sequences**:
+  - *"Move forward, turn right, and wave"*
+
+---
+
+## 🛠️ Technology Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Framer Motion, Lucide Icons
+- **3D Graphics**: Three.js, React Three Fiber (`@react-three/fiber`), Drei (`@react-three/drei`)
+- **State Management**: Zustand
+- **Speech & Audio**: Web Speech API (`SpeechRecognition`), SpeechSynthesis TTS, Web Audio API Synthesizer
+- **Build Tool**: Vite
+
+---
+
+## 📄 License
+
+MIT License. Designed for engineering project demonstrations, hackathons, portfolios, and research showcase.
