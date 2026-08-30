@@ -12,6 +12,19 @@ BACKEND_DIR = os.path.join(CURRENT_DIR, "backend")
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
+# Monkey-patch SpeechBrain LazyModule to prevent crashes on missing optional integrations (nlp, numba, etc.)
+try:
+    import speechbrain.utils.importutils as _sb_importutils
+    _orig_ensure = _sb_importutils.LazyModule.ensure_module
+    def _safe_ensure_module(self, stacklevel=1):
+        try:
+            return _orig_ensure(self, stacklevel=stacklevel)
+        except Exception:
+            return None
+    _sb_importutils.LazyModule.ensure_module = _safe_ensure_module
+except Exception:
+    pass
+
 try:
     from app.ai.gemini_client import get_intent, parse_rule_based_intent, get_api_key
 except ImportError:

@@ -5,6 +5,19 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", module="speechbrain")
 
+# Monkey-patch SpeechBrain LazyModule to prevent crashes on missing optional integrations (nlp, numba, etc.)
+try:
+    import speechbrain.utils.importutils as _sb_importutils
+    _orig_ensure = _sb_importutils.LazyModule.ensure_module
+    def _safe_ensure_module(self, stacklevel=1):
+        try:
+            return _orig_ensure(self, stacklevel=stacklevel)
+        except Exception:
+            return None
+    _sb_importutils.LazyModule.ensure_module = _safe_ensure_module
+except Exception:
+    pass
+
 import torch
 import torchaudio
 import numpy as np
